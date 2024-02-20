@@ -13,7 +13,7 @@ const symbols = platform === 'win32' ? { success: '', failed: '' } : { success: 
 let options = null;
 let recLang = null;
 
-module.exports = function (args, endpointsFiles, data) {
+module.exports = function (args, endpointsFiles, data,  specMapping) {
     let outputFile = null;
     options = { 
         language: null, 
@@ -50,13 +50,13 @@ module.exports = function (args, endpointsFiles, data) {
     swaggerTags.setDisableLogs(options.disableLogs);
 
     if(outputFile && endpointsFiles){
-        return init(outputFile, endpointsFiles, data);
+        return init(outputFile, endpointsFiles, data,specMapping);
     } else {
-        return async (outputFile, endpointsFiles, data) => init(outputFile, endpointsFiles, data);
+        return async (outputFile, endpointsFiles, data, specMapping) => init(outputFile, endpointsFiles, data, specMapping);
     }
 };
 
-const init = async (outputFile, endpointsFiles, data) => {
+const init = async (outputFile, endpointsFiles, data,specMapping) => {
     try {
         if (!outputFile) throw console.error("\nError: 'outputFile' was not specified.");
         if (!endpointsFiles) throw console.error("\nError: 'endpointsFiles' was not specified.");
@@ -157,7 +157,21 @@ const init = async (outputFile, endpointsFiles, data) => {
                 relativePath = null;
             }
 
-            let obj = await handleFiles.readEndpointFile(filePath, '', relativePath, []); //innit
+            try {
+                console.log('Swagger-autogen1:',specMapping, filePath );
+                const routeSpecificConfig = await new Promise((resolve, reject) => {
+                    fs.readFile(specMapping?.[filePath].routeSpecificConfigFilePath, 'utf8', (err, data) => {
+                        if (err || !data || data.trim() === '') {
+                            console.log('No Data Found');
+                            reject(err || new Error('No data found'));
+                        } else {
+                            const parsedData = JSON.parse(data);
+                            resolve(parsedData);
+                        }
+                    });
+                });
+                console.log('congoler 003:', routeSpecificConfig, 'typeOf Data: ', typeof(routeSpecificConfig));
+            let obj = await handleFiles.readEndpointFile(filePath, '', relativePath, [],'','', routeSpecificConfig); //innit
             if (obj === false) {
                 if (!options.disableLogs) {
                     console.log('Swagger-autogen:', '\x1b[31m', 'Failed ' + symbols.failed, '\x1b[0m');
@@ -167,6 +181,10 @@ const init = async (outputFile, endpointsFiles, data) => {
             objDoc.paths = merge(objDoc.paths, obj, {
                 arrayMerge: overwriteMerge
             });
+        }
+            catch (error) {
+                console.error('Error reading file:', error);
+            }
         }
         let constainXML = false;
         if (JSON.stringify(objDoc).includes('application/xml')) {

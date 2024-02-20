@@ -168,20 +168,35 @@ function formatDefinitions(def, resp = {}, constainXML) {
  * Search for #swagger.specsPath = 'filePath'   (by default is ../globalPath)
  * @param {*} path
  */
-function getAutoPath(path) {
+function getAutoPath(path, specType = "commonSpecs") {
     try {
-        console.log('Searching for path: ' + path);
-        if (path.includes(statics.SWAGGER_TAG + '.specsPath')) {
-            let auto = path.split(new RegExp(statics.SWAGGER_TAG + '.specsPath' + '\\s*\\=\\s*'))[1];
-            auto = auto.split(new RegExp(statics.SWAGGER_TAG + '.path\\s*\\='))[1];
-            auto = utils.popString(path);
-            return auto;
+        console.log('Searching for path: ' + path, specType);
+        switch (specType) {
+            case 'commonSpecs':
+                return extractAutoPath(path, statics.SWAGGER_TAG + '.specsPath');
+            case 'routeSpecs':
+                return extractAutoPath(path, statics.SWAGGER_TAG + '.RouteSpec');
+            default:
+                return false;
         }
-        else return false; 
     } catch (err) {
+        console.error('Error:', err);
         return false;
     }
 }
+
+function extractAutoPath(path, tag) {
+    console.log('Extracting path: ' + path, tag);
+    if (path.includes(tag)) {
+        const regex = new RegExp(`${tag}\\s*=\\s*\\[(['"])(.*?)\\1\\]`);
+        const match = path.match(regex);
+        const extractedPath = match ? match[2] : null;
+        console.log('Extracted path: ', extractedPath);
+        return extractedPath;
+    }
+    return null;
+}
+
 
 /**
  * TODO: fill
@@ -801,7 +816,7 @@ function getOperationId(data, reference) {
  */
 function getTags(data, reference) {
     try {
-        console.log(`[swagger-autogen]:`, data, reference);
+        console.log(`[swagger-autogen]:`, data,'reference:', reference);
         let tags = [];
         let swaggerTags = data.split(new RegExp(`${statics.SWAGGER_TAG}.tags\\s*\\=\\s*`))[1];
         const symbol = swaggerTags[0];

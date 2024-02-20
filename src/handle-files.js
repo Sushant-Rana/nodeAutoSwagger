@@ -23,7 +23,7 @@ const overwriteMerge = (destinationArray, sourceArray, options) => {
  * @param {string} relativePath Relative file's path.
  * @param {array} receivedRouteMiddlewares Array containing middleware to be applied in the endpoint's file.
  */
-function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteMiddlewares = [], restrictedContent, globalSwaggerProperties) {
+function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMiddlewares = [], restrictedContent, globalSwaggerProperties,routeSpecificConfig) {
     return new Promise(resolve => {
         let paths = {};
         fs.readFile(filePath, 'utf8', async function (err, data) {
@@ -1291,10 +1291,8 @@ function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteM
                                     }
                                 }
                             }
-                            console.log('Consoler 001: ', endpoint, typeof(endpoint));
                             if(endpoint && endpoint.includes(statics.SWAGGER_TAG + '.specsPath')) {
                                 const globalSettingsPath = swaggerTags.getAutoPath(endpoint);
-                                console.log('Consoler 002:', globalSettingsPath );
                                 try {
                                     const data = await new Promise((resolve, reject) => {
                                         fs.readFile(globalSettingsPath, 'utf8', (err, data) => {
@@ -1307,21 +1305,16 @@ function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteM
                                         });
                                     });
                             
-                                    console.log('Consoler 003:', data, 'typeOf Data: ', typeof(data));
                                      globalSwaggerProperties = data.replaceAll('\n', ' ')
                                                                         .replaceAll('/*', '\n')
                                                                         .replaceAll('*/', '\n')
                                                                         .replaceAll(statics.SWAGGER_TAG, '\n' + statics.SWAGGER_TAG);
-                                    console.log('Consoler 005:', globalSwaggerProperties);
-                                    console.log('Consoler 004: ', globalSwaggerProperties);
                                 } catch (error) {
                                     console.error('Error reading file:', error);
                                 }
                             }
-                            
-                            console.log('Consoler 004: ', globalSwaggerProperties);
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.auto')) {
-                                autoMode = swaggerTags.getAutoTag(endpoint);
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.auto') || (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto')) ) {
+                                autoMode =routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto') || swaggerTags.getAutoTag(endpoint);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.auto')) {
                                 autoMode = swaggerTags.getAutoTag(globalSwaggerProperties);
                             }
@@ -1331,43 +1324,43 @@ function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteM
                                 objParameters = await handleData.getPathParameters(path, objParameters);
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoBody')) {
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoBody') || (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto'))) {
                                 objEndpoint[path][method]['autoBody'] = swaggerTags.getAutoParameterTag(endpoint, reference, 'autoBody');
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.autoBody')) {
                                 objEndpoint[path][method]['autoBody'] = swaggerTags.getAutoParameterTag(globalSwaggerProperties, reference, 'autoBody');
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoQuery')) {
-                                objEndpoint[path][method]['autoQuery'] = swaggerTags.getAutoParameterTag(endpoint, reference, 'autoQuery');
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoQuery')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('autoQuery'))) {
+                                objEndpoint[path][method]['autoQuery'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('autoQuery') || swaggerTags.getAutoParameterTag(endpoint, reference, 'autoQuery');
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.autoQuery')) {
                                 objEndpoint[path][method]['autoQuery'] = swaggerTags.getAutoParameterTag(globalSwaggerProperties, reference, 'autoQuery');
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoHeaders')) {
-                                objEndpoint[path][method]['autoHeaders'] = swaggerTags.getAutoParameterTag(endpoint, reference, 'autoHeaders');
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoHeaders')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('autoHeaders'))) {
+                                objEndpoint[path][method]['autoHeaders'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('autoHeaders') || swaggerTags.getAutoParameterTag(endpoint, reference, 'autoHeaders');
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.autoHeaders')) {
                                 objEndpoint[path][method]['autoHeaders'] = swaggerTags.getAutoParameterTag(globalSwaggerProperties, reference, 'autoHeaders');
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.operationId')) {
-                                objEndpoint[path][method]['operationId'] = swaggerTags.getOperationId(endpoint, reference);
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.operationId')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('operationId'))) {
+                                objEndpoint[path][method]['operationId'] =routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('operationId') ||  swaggerTags.getOperationId(endpoint, reference);
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.summary')) {
-                                objEndpoint[path][method]['summary'] = swaggerTags.getSummary(endpoint, reference);
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.summary')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('summary'))) {
+                                objEndpoint[path][method]['summary'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('summary') || swaggerTags.getSummary(endpoint, reference);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.summary')) {
                                 objEndpoint[path][method]['summary'] = swaggerTags.getSummary(globalSwaggerProperties, reference);
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.parameters') && endpoint.includes('[') && endpoint.includes(']')) {
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.parameters') && endpoint.includes('[') && endpoint.includes(']')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('parameters'))) {
                                 objParameters = await swaggerTags.getParametersTag(endpoint, objParameters, reference);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.parameters') && globalSwaggerProperties.includes('[') && endpoint.includes(']')) {
                                 objParameters = await swaggerTags.getParametersTag(globalSwaggerProperties, objParameters, reference);
                             }
 
                             if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.requestBody')) {
-                                objEndpoint[path][method].requestBody = await swaggerTags.getRequestBodyTag(endpoint, reference);
-                            } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.requestBody')) {
+                                objEndpoint[path][method].requestBody =routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('requestBody') || await swaggerTags.getRequestBodyTag(endpoint, reference);
+                            } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.requestBody')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('requestBody'))) {
                                 objEndpoint[path][method].requestBody = await swaggerTags.getRequestBodyTag(globalSwaggerProperties, reference);
                             }
 
@@ -1388,34 +1381,35 @@ function readEndpointFile(filePath, pathRoute = '', relativePath, receivedRouteM
                             if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.responses')) {
                                 globalObjResponses = await swaggerTags.getResponsesTag(globalSwaggerProperties, {}, reference);
                             }
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.responses')) {
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.responses')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('responses'))) {
                                 objResponses = await swaggerTags.getResponsesTag(endpoint, objResponses, reference);
                                 objResponsesTag = objResponses;
                             }
-
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.description')) {
-                                objEndpoint[path][method]['description'] = swaggerTags.getDescription(endpoint, reference);
-                            } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.description')) {
+                            console.log('raja',routeSpecificConfig,'routeSpecificConfig::',reference?.path,reference?.method, routeSpecificConfig?.[reference?.path]?.[reference?.method].description);
+                            if ((endpoint && endpoint.includes(statics.SWAGGER_TAG + '.description'))|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('description'))) {
+                               
+                                objEndpoint[path][method]['description'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].description || swaggerTags.getDescription(endpoint, reference);
+                            } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.description')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('description'))) {
                                 objEndpoint[path][method]['description'] = swaggerTags.getDescription(globalSwaggerProperties, reference);
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.tags')) {
-                                console.log('Consoler 006.1: ', endpoint); 
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.tags')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('tags'))) {
+                                console.log('mongoler 006.1: ', endpoint); 
                                 objEndpoint[path][method]['tags'] = swaggerTags.getTags(endpoint, reference);
-                                console.log('Consoler 006.2: ', objEndpoint[path][method]['tags'] );
+                                console.log('mongoler 006.2: ', objEndpoint[path][method]['tags'] );
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.tags')) {
-                              console.log('Consoler 006: ', globalSwaggerProperties);
+                              console.log('mongoler 006: ', globalSwaggerProperties);
                                 objEndpoint[path][method]['tags'] = swaggerTags.getTags(globalSwaggerProperties, reference);
-                                console.log('Consoler 00600: ', objEndpoint[path][method]['tags'] );
+                                console.log('mongoler 00600: ', objEndpoint[path][method]['tags'] );
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.security')) {
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.security')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto'))) {
                                 objEndpoint[path][method]['security'] = await swaggerTags.getSecurityTag(endpoint, reference);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.security')) {
                                 objEndpoint[path][method]['security'] = await swaggerTags.getSecurityTag(globalSwaggerProperties, reference);
                             }
 
-                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.deprecated')) {
+                            if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.deprecated')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto'))) {
                                 objEndpoint[path][method]['deprecated'] = swaggerTags.getDeprecatedTag(endpoint, reference);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.deprecated')) {
                                 objEndpoint[path][method]['deprecated'] = swaggerTags.getDeprecatedTag(globalSwaggerProperties, reference);

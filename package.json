@@ -47,6 +47,7 @@
     "glob": "^7.1.7",
     "json5": "^2.2.3",
 		"@babel/plugin-proposal-decorators": "latest",
-		"@babel/preset-env": "latest"
+		"@babel/preset-env": "latest",
+		"@babel/core": "latest"
   }
 }

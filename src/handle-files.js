@@ -32,7 +32,8 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
 		receivedRouteMiddlewares,
 		restrictedContent,
 		globalSwaggerProperties,
-	}, "************readEndpointFile")
+		routeSpecificConfig: JSON.stringify(routeSpecificConfig, null, 2),
+	}, "************readEndpointFile");
     return new Promise(resolve => {
         let paths = {};
         fs.readFile(filePath, 'utf8', async function (err, data) {
@@ -1239,6 +1240,7 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
                     // Used in logs
                     let reference = { filePath, predefPattern, method, path: rawPathResolved || path };
 
+					console.log(redText, reference, "*********reference");
                     /**
                      * Handling all endpoint functions
                      */
@@ -1324,6 +1326,7 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
                             }
                             if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.auto') || (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto')) ) {
                                 autoMode =routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto') || swaggerTags.getAutoTag(endpoint);
+								console.log(redText, autoMode, "************autoMode l1");
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.auto')) {
                                 autoMode = swaggerTags.getAutoTag(globalSwaggerProperties);
                             }
@@ -1335,8 +1338,12 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
 
                             if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoBody') || (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('auto'))) {
                                 objEndpoint[path][method]['autoBody'] = swaggerTags.getAutoParameterTag(endpoint, reference, 'autoBody');
+								console.log(redText, objEndpoint[path][method]['autoBody'], "************objEndpoint[path][method]['autoBody'] l2");
+
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.autoBody')) {
                                 objEndpoint[path][method]['autoBody'] = swaggerTags.getAutoParameterTag(globalSwaggerProperties, reference, 'autoBody');
+								console.log(redText, objEndpoint[path][method]['autoBody'], "************objEndpoint[path][method]['autoBody'] l3");
+
                             }
 
                             if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.autoQuery')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('autoQuery'))) {

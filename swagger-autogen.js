@@ -6,6 +6,7 @@ const statics = require('./src/statics');
 const utils = require('./src/utils');
 const handleData = require('./src/handle-data');
 const merge = require('deepmerge');
+const { blueText } = require('./src/color-preset');
 
 const { platform } = process;
 const symbols = platform === 'win32' ? { success: '', failed: '' } : { success: '✔', failed: '✖' };
@@ -13,16 +14,22 @@ const symbols = platform === 'win32' ? { success: '', failed: '' } : { success: 
 let options = null;
 let recLang = null;
 
-module.exports = function (args, endpointsFiles, data) {
+module.exports = function (args, endpointsFiles, data,  specMapping) {
+	console.log(blueText, JSON.stringify({
+		args,
+		endpointsFiles,
+		data,
+		specMapping,
+	}, null, 2), "**********swagger autogen init")
     let outputFile = null;
-    options = { 
-        language: null, 
-        disableLogs: false, 
-        disableWarnings: false, 
-        openapi: null, 
-        autoHeaders: true, 
-        autoQuery: true, 
-        autoBody: true, 
+    options = {
+        language: null,
+        disableLogs: false,
+        disableWarnings: false,
+        openapi: null,
+        autoHeaders: true,
+        autoQuery: true,
+        autoBody: true,
         autoResponse: true,
         sortParameters: 'natural',   // in test
         sanitizeOutputData: false,
@@ -43,20 +50,20 @@ module.exports = function (args, endpointsFiles, data) {
     options.language = recLang || options.language || 'en-US';
     handleFiles.setOptions(options);
     handleData.setOptions(options);
-    utils.setOptions(options);        
+    utils.setOptions(options);
 
     swaggerTags.setLanguage(recLang || options.language || 'en-US');
     swaggerTags.setOpenAPI(options.openapi);
     swaggerTags.setDisableLogs(options.disableLogs);
 
     if(outputFile && endpointsFiles){
-        return init(outputFile, endpointsFiles, data);
+        return init(outputFile, endpointsFiles, data,specMapping);
     } else {
-        return async (outputFile, endpointsFiles, data) => init(outputFile, endpointsFiles, data);
+        return async (outputFile, endpointsFiles, data, specMapping) => init(outputFile, endpointsFiles, data, specMapping);
     }
 };
 
-const init = async (outputFile, endpointsFiles, data) => {
+const init = async (outputFile, endpointsFiles, data,specMapping) => {
     try {
         if (!outputFile) throw console.error("\nError: 'outputFile' was not specified.");
         if (!endpointsFiles) throw console.error("\nError: 'endpointsFiles' was not specified.");
@@ -157,7 +164,21 @@ const init = async (outputFile, endpointsFiles, data) => {
                 relativePath = null;
             }
 
-            let obj = await handleFiles.readEndpointFile(filePath, '', relativePath, []); //innit
+            try {
+                console.log(blueText, '*******Swagger-autogen1: filePath', filePath);
+                const routeSpecificConfig = await new Promise((resolve, reject) => {
+                    fs.readFile(specMapping?.[filePath].routeSpecificConfigFilePath, 'utf8', (err, data) => {
+                        if (err || !data || data.trim() === '') {
+                            console.log('No Data Found');
+                            reject(err || new Error('No data found'));
+                        } else {
+                            const parsedData = JSON.parse(data);
+                            resolve(parsedData);
+                        }
+                    });
+                });
+                console.log('congoler 003:', routeSpecificConfig, 'typeOf Data: ', typeof(routeSpecificConfig));
+            let obj = await handleFiles.readEndpointFile(filePath, '', relativePath, [],'','', routeSpecificConfig); //innit
             if (obj === false) {
                 if (!options.disableLogs) {
                     console.log('Swagger-autogen:', '\x1b[31m', 'Failed ' + symbols.failed, '\x1b[0m');
@@ -167,6 +188,10 @@ const init = async (outputFile, endpointsFiles, data) => {
             objDoc.paths = merge(objDoc.paths, obj, {
                 arrayMerge: overwriteMerge
             });
+        }
+            catch (error) {
+                console.error('Error reading file:', error);
+            }
         }
         let constainXML = false;
         if (JSON.stringify(objDoc).includes('application/xml')) {
@@ -345,7 +370,7 @@ const init = async (outputFile, endpointsFiles, data) => {
                 }
             }
         }
-        
+
         if (!options.disableLogs) {
             console.log('Swagger-autogen:', '\x1b[32m', 'Success ' + symbols.success, '\x1b[0m');
         }
@@ -353,8 +378,8 @@ const init = async (outputFile, endpointsFiles, data) => {
         const objDocOrig = {...objDoc}
         try {
             if (options.sanitizeOutputData) {
-                return { 
-                    success: true, 
+                return {
+                    success: true,
                     data: JSON.parse(JSON.stringify(objDoc)) // Deleting 'undefined' parameters
                 };
             }

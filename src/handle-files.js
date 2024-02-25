@@ -6,6 +6,7 @@ const handleData = require('./handle-data');
 const statics = require('./statics');
 const utils = require('./utils');
 const codeParser = require('./code-parser');
+const { redText } = require('./color-preset');
 
 let globalOptions = {};
 function setOptions(options) {
@@ -24,6 +25,14 @@ const overwriteMerge = (destinationArray, sourceArray, options) => {
  * @param {array} receivedRouteMiddlewares Array containing middleware to be applied in the endpoint's file.
  */
 function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMiddlewares = [], restrictedContent, globalSwaggerProperties,routeSpecificConfig) {
+	console.log(redText, {
+		filePath,
+		pathRoute,
+		relativePath,
+		receivedRouteMiddlewares,
+		restrictedContent,
+		globalSwaggerProperties,
+	}, "************readEndpointFile")
     return new Promise(resolve => {
         let paths = {};
         fs.readFile(filePath, 'utf8', async function (err, data) {
@@ -1304,7 +1313,7 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
                                             }
                                         });
                                     });
-                            
+
                                      globalSwaggerProperties = data.replaceAll('\n', ' ')
                                                                         .replaceAll('/*', '\n')
                                                                         .replaceAll('*/', '\n')
@@ -1387,14 +1396,14 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
                             }
                             console.log('raja',routeSpecificConfig,'routeSpecificConfig::',reference?.path,reference?.method, routeSpecificConfig?.[reference?.path]?.[reference?.method].description);
                             if ((endpoint && endpoint.includes(statics.SWAGGER_TAG + '.description'))|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('description'))) {
-                               
+
                                 objEndpoint[path][method]['description'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].description || swaggerTags.getDescription(endpoint, reference);
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.description')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('description'))) {
                                 objEndpoint[path][method]['description'] = swaggerTags.getDescription(globalSwaggerProperties, reference);
                             }
 
                             if (endpoint && endpoint.includes(statics.SWAGGER_TAG + '.tags')|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('tags'))) {
-                                console.log('mongoler 006.1: ', endpoint); 
+                                console.log('mongoler 006.1: ', endpoint);
                                 objEndpoint[path][method]['tags'] = swaggerTags.getTags(endpoint, reference);
                                 console.log('mongoler 006.2: ', objEndpoint[path][method]['tags'] );
                             } else if (globalSwaggerProperties && globalSwaggerProperties.includes(statics.SWAGGER_TAG + '.tags')) {

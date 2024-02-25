@@ -45,6 +45,8 @@
     "acorn": "^7.4.1",
     "deepmerge": "^4.2.2",
     "glob": "^7.1.7",
-    "json5": "^2.2.3"
+    "json5": "^2.2.3",
+		"@babel/plugin-proposal-decorators": "latest",
+		"@babel/preset-env": "latest"
   }
 }

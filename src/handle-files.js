@@ -6,7 +6,7 @@ const handleData = require('./handle-data');
 const statics = require('./statics');
 const utils = require('./utils');
 const codeParser = require('./code-parser');
-const { redText } = require('./color-preset');
+const { redText, yellowText } = require('./color-preset');
 
 let globalOptions = {};
 function setOptions(options) {
@@ -1401,7 +1401,7 @@ function readEndpointFile(filePath, pathRoute = '', relativePath,receivedRouteMi
                                 objResponses = await swaggerTags.getResponsesTag(endpoint, objResponses, reference);
                                 objResponsesTag = objResponses;
                             }
-                            console.log('raja',routeSpecificConfig,'routeSpecificConfig::',reference?.path,reference?.method, routeSpecificConfig?.[reference?.path]?.[reference?.method].description);
+                            console.log(yellowText, { referencePath: reference?.path, referenceMethod:reference?.method, description: routeSpecificConfig?.[reference?.path]?.[reference?.method].description}, '**********currentRouteDetail');
                             if ((endpoint && endpoint.includes(statics.SWAGGER_TAG + '.description'))|| (routeSpecificConfig?.[reference?.path]?.[reference?.method].hasOwnProperty('description'))) {
 
                                 objEndpoint[path][method]['description'] = routeSpecificConfig?.[reference?.path]?.[reference?.method].description || swaggerTags.getDescription(endpoint, reference);

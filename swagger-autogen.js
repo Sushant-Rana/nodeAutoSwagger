@@ -6,6 +6,7 @@ const statics = require('./src/statics');
 const utils = require('./src/utils');
 const handleData = require('./src/handle-data');
 const merge = require('deepmerge');
+const { blueText } = require('./src/color-preset');
 
 const { platform } = process;
 const symbols = platform === 'win32' ? { success: '', failed: '' } : { success: '✔', failed: '✖' };
@@ -14,15 +15,21 @@ let options = null;
 let recLang = null;
 
 module.exports = function (args, endpointsFiles, data,  specMapping) {
+	console.log(blueText, JSON.stringify({
+		args,
+		endpointsFiles,
+		data,
+		specMapping,
+	}, null, 2), "**********swagger autogen init")
     let outputFile = null;
-    options = { 
-        language: null, 
-        disableLogs: false, 
-        disableWarnings: false, 
-        openapi: null, 
-        autoHeaders: true, 
-        autoQuery: true, 
-        autoBody: true, 
+    options = {
+        language: null,
+        disableLogs: false,
+        disableWarnings: false,
+        openapi: null,
+        autoHeaders: true,
+        autoQuery: true,
+        autoBody: true,
         autoResponse: true,
         sortParameters: 'natural',   // in test
         sanitizeOutputData: false,
@@ -43,7 +50,7 @@ module.exports = function (args, endpointsFiles, data,  specMapping) {
     options.language = recLang || options.language || 'en-US';
     handleFiles.setOptions(options);
     handleData.setOptions(options);
-    utils.setOptions(options);        
+    utils.setOptions(options);
 
     swaggerTags.setLanguage(recLang || options.language || 'en-US');
     swaggerTags.setOpenAPI(options.openapi);
@@ -158,7 +165,7 @@ const init = async (outputFile, endpointsFiles, data,specMapping) => {
             }
 
             try {
-                console.log('Swagger-autogen1:',specMapping, filePath );
+                console.log(blueText, '*******Swagger-autogen1: filePath', filePath);
                 const routeSpecificConfig = await new Promise((resolve, reject) => {
                     fs.readFile(specMapping?.[filePath].routeSpecificConfigFilePath, 'utf8', (err, data) => {
                         if (err || !data || data.trim() === '') {
@@ -363,7 +370,7 @@ const init = async (outputFile, endpointsFiles, data,specMapping) => {
                 }
             }
         }
-        
+
         if (!options.disableLogs) {
             console.log('Swagger-autogen:', '\x1b[32m', 'Success ' + symbols.success, '\x1b[0m');
         }
@@ -371,8 +378,8 @@ const init = async (outputFile, endpointsFiles, data,specMapping) => {
         const objDocOrig = {...objDoc}
         try {
             if (options.sanitizeOutputData) {
-                return { 
-                    success: true, 
+                return {
+                    success: true,
                     data: JSON.parse(JSON.stringify(objDoc)) // Deleting 'undefined' parameters
                 };
             }

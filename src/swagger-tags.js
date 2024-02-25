@@ -816,7 +816,7 @@ function getOperationId(data, reference) {
  */
 function getTags(data, reference) {
     try {
-        console.log(`[swagger-autogen]:`, data,'reference:', reference);
+        console.log(`*******[swagger-autogen] getTags data :`, data,'*******reference:', reference);
         let tags = [];
         let swaggerTags = data.split(new RegExp(`${statics.SWAGGER_TAG}.tags\\s*\\=\\s*`))[1];
         const symbol = swaggerTags[0];
